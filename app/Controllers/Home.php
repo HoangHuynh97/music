@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Controllers;
 
 class Home extends BaseController
@@ -57,6 +56,15 @@ class Home extends BaseController
     {
         $db = db_connect();
         $data = $this->request->getVar();
+
+        $checkExists = $db->query('select * from tbl_user where user = '.'"'.$data->inputUser.'"');
+        $row = $checkExists->getRow();
+        if(isset($row)) {
+            $rep = [
+                "message" => "exists"
+            ];
+            return json_encode($rep);
+        }
 
         $dataInsert = [
             'user' => $data->inputUser,
@@ -160,7 +168,7 @@ class Home extends BaseController
     }
 
     public function get_DataSong()
-    {
+    {   
         $db = db_connect();
         $data = $this->request->getVar();
         $dataResult = [];
@@ -279,7 +287,7 @@ class Home extends BaseController
             $dataResult['dataSinger_hot'][$keySinger_hot]['id'] = $row['id'];
             $keySinger_hot++;
         }
-
+        
         return json_encode($dataResult);
     }
 
