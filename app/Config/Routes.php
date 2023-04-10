@@ -55,6 +55,7 @@ $routes->post('/search_song', 'Home::search_song');
 $routes->post('/get_DataProfile', 'Home::get_DataProfile');
 $routes->post('/add_like', 'Home::add_like');
 $routes->post('/del_like', 'Home::del_like');
+$routes->post('/add_like_playlist', 'Home::add_like_playlist');
 $routes->post('/add_like_byURL', 'Home::add_like_byURL');
 $routes->post('/del_like_byURL', 'Home::del_like_byURL');
 $routes->post('/check_like', 'Home::check_like');

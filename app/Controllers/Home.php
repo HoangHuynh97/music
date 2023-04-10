@@ -198,6 +198,13 @@ class Home extends BaseController
             $dataResult['dataSongNew'][$keySong_new]['date_create'] = $row['date_create'];
             $dataResult['dataSongNew'][$keySong_new]['id_singer'] = $arrSinger;
             $dataResult['dataSongNew'][$keySong_new]['text_gr_singer'] = $text_gr_singer;
+
+            if(!$data->id_user) {
+                $data->id_user = 0;
+            }
+            $getLike = $db->query('select * from tbl_like where id_song = '.$row['id'].' and id_user = '.$data->id_user);
+            $rowLike = $getLike->getRow();
+            $dataResult['dataSongNew'][$keySong_new]['is_like'] = $rowLike ? $rowLike->id_song : 0;
             $keySong_new++;
         }
 
@@ -222,14 +229,14 @@ class Home extends BaseController
                 if($ii < 4) {
                     for ($ii; $ii < 4; $ii++) {
                         $arrImg[$ii] = [
-                            'img' => 'am-nhac.jpg'
+                            'img' => '/am-nhac.jpg'
                         ];
                     }
                 }
             } else {
                 for ($i=0; $i < 4; $i++) { 
                     $arrImg[$i] = [
-                        'img' => 'am-nhac.jpg'
+                        'img' => '/am-nhac.jpg'
                     ];
                 }
             }
@@ -238,6 +245,13 @@ class Home extends BaseController
             $dataResult['dataPlaylist'][$key_playlist]['id'] = $row['id'];
             $dataResult['dataPlaylist'][$key_playlist]['name'] = $row['name'];
             $dataResult['dataPlaylist'][$key_playlist]['create_by'] = 'Admin';
+            
+            if(!$data->id_user) {
+                $data->id_user = 0;
+            }
+            $getLike = $db->query('select * from tbl_like_playlist where id_playlist = '.$row['id'].' and id_user = '.$data->id_user);
+            $rowLike = $getLike->getRow();
+            $dataResult['dataPlaylist'][$key_playlist]['is_like'] = $rowLike ? $rowLike->id_song : 0;
             $key_playlist++;
         }
 
@@ -563,14 +577,14 @@ class Home extends BaseController
                 if($ii < 4) {
                     for ($ii; $ii < 4; $ii++) {
                         $arrImg[$ii] = [
-                            'img' => 'am-nhac.jpg'
+                            'img' => '/am-nhac.jpg'
                         ];
                     }
                 }
             } else {
                 for ($i=0; $i < 4; $i++) { 
                     $arrImg[$i] = [
-                        'img' => 'am-nhac.jpg'
+                        'img' => '/am-nhac.jpg'
                     ];
                 }
             }
@@ -624,21 +638,90 @@ class Home extends BaseController
             $keySong_like++;
         }
 
+        $query_playlist_like = $db->query('select * from tbl_like_playlist where id_user = '.$data->id_user.' ORDER BY id DESC limit 10');
+        $arrSong_playlist_like = $query_playlist_like->getResultArray();
+        $key_playlist_like = 0;
+        foreach ($arrSong_playlist_like as $row) {
+            $arrImg = [];
+            $query_playlist = $db->query('select * from tbl_playlist where id = '.$row['id_playlist']);
+            $arrSong_playlist = $query_playlist->getRow();
+            if($arrSong_playlist->id_song != null && $arrSong_playlist->id_song != '') {
+                $arrIDSong = explode(',', $arrSong_playlist->id_song);
+                $ii = 0;
+                $count = count($arrIDSong) > 4 ? 4 : count($arrIDSong);
+                for ($ii; $ii < $count; $ii++) {
+                    $getIMG = $db->query('select * from tbl_song where id = '.$arrIDSong[$ii]);
+                    $rowIMG = $getIMG->getRow();
+                    $arrImg[$ii] = [
+                        'img' => $rowIMG->image
+                    ];
+                }
+                if($ii < 4) {
+                    for ($ii; $ii < 4; $ii++) {
+                        $arrImg[$ii] = [
+                            'img' => '/am-nhac.jpg'
+                        ];
+                    }
+                }
+            } else {
+                for ($i=0; $i < 4; $i++) { 
+                    $arrImg[$i] = [
+                        'img' => '/am-nhac.jpg'
+                    ];
+                }
+            }
+            $dataResult['dataPlaylistLike'][$key_playlist_like]['img'] = $arrImg;
+            $dataResult['dataPlaylistLike'][$key_playlist_like]['id'] = $arrSong_playlist->id;
+            $dataResult['dataPlaylistLike'][$key_playlist_like]['name'] = $arrSong_playlist->name;
+
+            $getCreateBy = $db->query('select * from tbl_user where id = '.$arrSong_playlist->id_user_create);
+            $rowCreateBy = $getCreateBy->getRow();
+            $dataResult['dataPlaylistLike'][$key_playlist_like]['create_by'] = $rowCreateBy->name;
+
+            if(!$data->id_user) {
+                $data->id_user = 0;
+            }
+            $getLike = $db->query('select * from tbl_like_playlist where id_playlist = '.$arrSong_playlist->id.' and id_user = '.$data->id_user);
+            $rowLike = $getLike->getRow();
+            $dataResult['dataPlaylistLike'][$key_playlist_like]['is_like'] = $rowLike ? $rowLike->id_song : 0;
+            $key_playlist_like++;
+        }
+
         return json_encode($dataResult);
     }
 
     public function add_like()
     {
         $db = db_connect();
+        $builder = $db->table('tbl_like');
 
         $data = $this->request->getVar();
-
         if(!$data->id_user) {
             $rep = [
                 "message" => "fail"
             ];
             return json_encode($rep);
         }
+
+        $checkExists = $db->query('select * from tbl_like where id_song = '.$data->id.' and id_user = '.$data->id_user);
+        $rowExists = $checkExists->getRow();
+        if(isset($rowExists)) {
+
+            $builder->where('id', $rowExists->id);
+            $res = $builder->delete();
+
+            if($res) {
+                $rep = [
+                    "message" => "delete"
+                ];
+            } else {
+                $rep = [
+                    "message" => "fail"
+                ];
+            }
+            return json_encode($rep);
+        }
+
         $dataInsert = [
                 'id_song' => $data->id,
                 'id_user' => $data->id_user
@@ -688,6 +771,55 @@ class Home extends BaseController
         return json_encode($rep);
     }
 
+    public function add_like_playlist()
+    {
+        $db = db_connect();
+        $builder = $db->table('tbl_like_playlist');
+
+        $data = $this->request->getVar();
+        if(!$data->id_user) {
+            $rep = [
+                "message" => "fail"
+            ];
+            return json_encode($rep);
+        }
+
+        $checkExists = $db->query('select * from tbl_like_playlist where id_playlist = '.$data->id.' and id_user = '.$data->id_user);
+        $rowExists = $checkExists->getRow();
+        if(isset($rowExists)) {
+            $builder->where('id', $rowExists->id);
+            $res = $builder->delete();
+            if($res) {
+                $rep = [
+                    "message" => "delete"
+                ];
+            } else {
+                $rep = [
+                    "message" => "fail"
+                ];
+            }
+            return json_encode($rep);
+        }
+
+        $dataInsert = [
+                'id_playlist' => $data->id,
+                'id_user' => $data->id_user
+            ];
+        $res = $db->table('tbl_like_playlist')->insert($dataInsert);
+        
+        if($res) {
+            $rep = [
+                "message" => "success",
+                "id" => $data->id
+            ];
+        } else {
+            $rep = [
+                "message" => "fail"
+            ];
+        }
+        return json_encode($rep);
+    }
+
     public function check_like()
     {
         $db = db_connect();
@@ -722,6 +854,7 @@ class Home extends BaseController
     {
         $db = db_connect();
         $data = $this->request->getVar();
+        $builder = $db->table('tbl_like');
 
         if(!$data->id_user || !$data->url) {
             $rep = [
@@ -732,6 +865,25 @@ class Home extends BaseController
 
         $getSong = $db->query('select * from tbl_song where id_gg = "'.$data->url.'"');
         $rowSong = $getSong->getRow();
+
+        $checkExists = $db->query('select * from tbl_like where id_song = '.$rowSong->id.' and id_user = '.$data->id_user);
+        $rowExists = $checkExists->getRow();
+        if(isset($rowExists)) {
+
+            $builder->where('id', $rowExists->id);
+            $res = $builder->delete();
+
+            if($res) {
+                $rep = [
+                    "message" => "delete"
+                ];
+            } else {
+                $rep = [
+                    "message" => "fail"
+                ];
+            }
+            return json_encode($rep);
+        }
 
         $dataInsert = [
                 'id_song' => $rowSong->id,
