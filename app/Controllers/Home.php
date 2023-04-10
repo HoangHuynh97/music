@@ -90,44 +90,53 @@ class Home extends BaseController
     {
         $db = db_connect();
         $data = $this->request->getVar();
+        if (!isset($_FILES["image"]) || $data['song'] == '' || $data['singer'] == '' || $data['gg'] == '')
+        {
+            $rep = [
+                "message" => "fail"
+            ];
+            return json_encode($rep);
+        }
 
-        $arrSinger = explode(" x ", $data->singer);
-        $idSinger = '';
-        for ($i=0; $i < count($arrSinger); $i++) {
-            $checkDataSinger = $db->query('select * from tbl_singer where name = "'.$arrSinger[$i].'"');
+        $target_dir = "C:/DEV/Git/project/hoang/hoang/assets/images/";
+        $target_file = $target_dir . basename($_FILES["image"]["name"]);
+        if (move_uploaded_file($_FILES["image"]["tmp_name"], $target_file)) {
+            $checkDataSinger = $db->query('select * from tbl_singer where name = "'.$data['singer'].'"');
             $rowDataSinger = $checkDataSinger->getRow();
-            
             if(isset($rowDataSinger)) {
-                $idSinger .= $rowDataSinger->id.',';
+                $idSinger = $rowDataSinger->id;
             } else {
                 $dataInsertSinger = [
-                    'name' => $arrSinger[$i],
+                    'name' => $data['singer'],
                     'image' => '',
                 ];
                 $db->table('tbl_singer')->insert($dataInsertSinger);
-                $idSinger .= $db->insertID().',';
+                $idSinger = $db->insertID();
             }
-        }
-        $idSinger = rtrim($idSinger, ",");
-
-        $dataInsert = [
-            'name' => $data->song,
-            'id_singer' => $idSinger,
-            'date_create' => date("Y-m-d"),
-            'id_gg' => $data->gg,
-        ];
-        $res = $db->table('tbl_song')->insert($dataInsert);
-        
-        if($res) {
-            $rep = [
-                "message" => "success"
+            $dataInsert = [
+                'name' => $data['song'],
+                'id_singer' => $idSinger,
+                'date_create' => date("Y-m-d"),
+                'id_gg' => $data['gg'],
+                'image' => '/' . $_FILES["image"]["name"],
             ];
+            $res = $db->table('tbl_song')->insert($dataInsert);
+            if($res) {
+                $rep = [
+                    "message" => "success"
+                ];
+            } else {
+                $rep = [
+                    "message" => "fail"
+                ];
+            }
+            return json_encode($rep);
         } else {
             $rep = [
                 "message" => "fail"
             ];
+            return json_encode($rep);
         }
-        return json_encode($rep);
     }
 
     public function add_playlist()
