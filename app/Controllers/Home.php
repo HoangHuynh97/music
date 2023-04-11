@@ -282,7 +282,7 @@ class Home extends BaseController
             }
             $getLike = $db->query('select * from tbl_like_playlist where id_playlist = '.$row['id'].' and id_user = '.$data->id_user);
             $rowLike = $getLike->getRow();
-            $dataResult['dataPlaylist'][$key_playlist]['is_like'] = $rowLike ? $rowLike->id_song : 0;
+            $dataResult['dataPlaylist'][$key_playlist]['is_like'] = $rowLike ? $rowLike->id_playlist : 0;
             $key_playlist++;
         }
 
@@ -368,11 +368,19 @@ class Home extends BaseController
             }
             $text_gr_singer = rtrim($text_gr_singer, " x ");
             $dataResult['dataSongbySinger'][$keySong]['name'] = $row['name'];
+            $dataResult['dataSongbySinger'][$keySong]['id'] = $row['id'];
             $dataResult['dataSongbySinger'][$keySong]['id_gg'] = $row['id_gg'];
             $dataResult['dataSongbySinger'][$keySong]['image'] = $row['image'];
             $dataResult['dataSongbySinger'][$keySong]['date_create'] = $row['date_create'];
             $dataResult['dataSongbySinger'][$keySong]['id_singer'] = $arrSinger;
             $dataResult['dataSongbySinger'][$keySong]['text_gr_singer'] = $text_gr_singer;
+
+            if(!$data->id_user) {
+                $data->id_user = 0;
+            }
+            $getLike = $db->query('select * from tbl_like where id_song = '.$row['id'].' and id_user = '.$data->id_user);
+            $rowLike = $getLike->getRow();
+            $dataResult['dataSongbySinger'][$keySong]['is_like'] = $rowLike ? $rowLike->id_song : 0;
             $keySong++;
         }
 
@@ -410,6 +418,13 @@ class Home extends BaseController
                 $dataResult['dataPlaylist'][$keySongExists]['img'] = $arrImg;
                 $dataResult['dataPlaylist'][$keySongExists]['name'] = $row2['name'];
                 $dataResult['dataPlaylist'][$keySongExists]['create_by'] = 'Admin';
+
+                if(!$data->id_user) {
+                    $data->id_user = 0;
+                }
+                $getLike = $db->query('select * from tbl_like_playlist where id_playlist = '.$row2['id'].' and id_user = '.$data->id_user);
+                $rowLike = $getLike->getRow();
+                $dataResult['dataPlaylist'][$keySongExists]['is_like'] = $rowLike ? $rowLike->id_playlist : 0;
                 $keySongExists++;
             }
         }
@@ -493,11 +508,19 @@ class Home extends BaseController
             }
             $text_gr_singer = rtrim($text_gr_singer, " x ");
             $dataResult['dataSongbyPlaylist'][$keySong]['name'] = $rowSong->name;
+            $dataResult['dataSongbyPlaylist'][$keySong]['id'] = $rowSong->id;
             $dataResult['dataSongbyPlaylist'][$keySong]['id_gg'] = $rowSong->id_gg;
             $dataResult['dataSongbyPlaylist'][$keySong]['image'] = $rowSong->image;
             $dataResult['dataSongbyPlaylist'][$keySong]['date_create'] = $rowSong->date_create;
             $dataResult['dataSongbyPlaylist'][$keySong]['id_singer'] = $arrSinger;
             $dataResult['dataSongbyPlaylist'][$keySong]['text_gr_singer'] = $text_gr_singer;
+
+            if(!$data->id_user) {
+                $data->id_user = 0;
+            }
+            $getLike = $db->query('select * from tbl_like where id_song = '.$rowSong->id.' and id_user = '.$data->id_user);
+            $rowLike = $getLike->getRow();
+            $dataResult['dataSongbyPlaylist'][$keySong]['is_like'] = $rowLike ? $rowLike->id_song : 0;
             $keySong++;
         }
 
