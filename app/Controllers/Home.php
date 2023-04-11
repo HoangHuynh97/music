@@ -98,21 +98,29 @@ class Home extends BaseController
             return json_encode($rep);
         }
 
-        $target_dir = "C:/DEV/Git/project/hoang/hoang/assets/images/";
+        // $target_dir = "C:/DEV/Git/project/hoang/hoang/assets/images/";
+        $target_dir = "E:/github/project/hoang/hoang/assets/images/";
+        
         $target_file = $target_dir . basename($_FILES["image"]["name"]);
         if (move_uploaded_file($_FILES["image"]["tmp_name"], $target_file)) {
-            $checkDataSinger = $db->query('select * from tbl_singer where name = "'.$data['singer'].'"');
-            $rowDataSinger = $checkDataSinger->getRow();
-            if(isset($rowDataSinger)) {
-                $idSinger = $rowDataSinger->id;
-            } else {
-                $dataInsertSinger = [
-                    'name' => $data['singer'],
-                    'image' => '',
-                ];
-                $db->table('tbl_singer')->insert($dataInsertSinger);
-                $idSinger = $db->insertID();
+            $arrSinger = explode(" x ", $data['singer']);
+            $idSinger = '';
+            for ($i=0; $i < count($arrSinger); $i++) {
+                $checkDataSinger = $db->query('select * from tbl_singer where name = "'.$arrSinger[$i].'"');
+                $rowDataSinger = $checkDataSinger->getRow();
+                if(isset($rowDataSinger)) {
+                    $idSinger .= $rowDataSinger->id.',';
+                } else {
+                    $dataInsertSinger = [
+                        'name' => $data['singer'],
+                        'image' => '',
+                    ];
+                    $db->table('tbl_singer')->insert($dataInsertSinger);
+                    $idSinger .= $db->insertID().',';
+                }
             }
+            $idSinger = rtrim($idSinger, ",");
+
             $dataInsert = [
                 'name' => $data['song'],
                 'id_singer' => $idSinger,
@@ -145,9 +153,23 @@ class Home extends BaseController
         $data = $this->request->getVar();
 
         if(isset($data->id_user_create)) {
+            $arrSong = explode(" | ", $data->value_song);
+            $idSong = '';
+            for ($i=0; $i < count($arrSong); $i++) {
+                $checkDataSinger = $db->query('select * from tbl_song where name = "'.$arrSong[$i].'"');
+                $rowDataSinger = $checkDataSinger->getRow();
+                if(isset($rowDataSinger)) {
+                    $idSong .= $rowDataSinger->id.',';
+                } else {
+                    continue;
+                }
+            }
+            $idSong = rtrim($idSong, ",");
+
             $dataInsert = [
                 'name' => $data->name,
-                'id_user_create' => $data->id_user_create
+                'id_user_create' => $data->id_user_create,
+                'id_song' => $idSong
             ];
             $res = $db->table('tbl_playlist')->insert($dataInsert);
             
@@ -557,6 +579,26 @@ class Home extends BaseController
         }
 
 
+        return json_encode($dataResult);
+    }
+
+    public function search_song_byName()
+    {
+        $db = db_connect();
+
+        $data = $this->request->getVar();
+        $dataResult = [];
+
+        $coverArrKey = explode(' | ', $data->key_search);
+
+        $query = $db->query('select * from tbl_song where name like "%'.array_pop($coverArrKey).'%" limit 5');
+        $arrSong_search = $query->getResultArray();
+        $keySongSearch = 0;
+        foreach ($arrSong_search as $row) {
+            $dataResult['dataSongSearch'][$keySongSearch]['name'] = $row['name'];
+            $dataResult['dataSongSearch'][$keySongSearch]['id'] = $row['id'];
+            $keySongSearch++;
+        }
         return json_encode($dataResult);
     }
 
