@@ -669,6 +669,13 @@ class Home extends BaseController
             $getCreateBy = $db->query('select * from tbl_user where id = '.$row['id_user_create']);
             $rowCreateBy = $getCreateBy->getRow();
             $dataResult['dataPlaylist'][$key_playlist]['create_by'] = $rowCreateBy->name;
+
+            if(!$data->id_user) {
+                $data->id_user = 0;
+            }
+            $getLike = $db->query('select * from tbl_like_playlist where id_playlist = '.$row['id'].' and id_user = '.$data->id_user);
+            $rowLike = $getLike->getRow();
+            $dataResult['dataPlaylist'][$key_playlist]['is_like'] = $rowLike ? $rowLike->id_playlist : 0;
             $key_playlist++;
         }
 
@@ -757,7 +764,7 @@ class Home extends BaseController
             }
             $getLike = $db->query('select * from tbl_like_playlist where id_playlist = '.$arrSong_playlist->id.' and id_user = '.$data->id_user);
             $rowLike = $getLike->getRow();
-            $dataResult['dataPlaylistLike'][$key_playlist_like]['is_like'] = $rowLike ? $rowLike->id_song : 0;
+            $dataResult['dataPlaylistLike'][$key_playlist_like]['is_like'] = $rowLike ? $rowLike->id_playlist : 0;
             $key_playlist_like++;
         }
 
